@@ -37,7 +37,10 @@ app.post('/api/v1/user/signup', async (c) => {
 
     const jwt = await sign({id: newUser.id}, c.env.JWT_SECRET);
 
-    return c.json(jwt);
+    return c.json({
+      jwt,
+      message: "User has signed up successfully",
+    });
   }
   catch(e){
     console.error(e);
@@ -46,8 +49,35 @@ app.post('/api/v1/user/signup', async (c) => {
   }
 })
 
-app.post('/api/v1/user/signin', (c) => {
-  return c.text("post signin");
+app.post('/api/v1/user/signin', async (c) => {
+  const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL,}).$extends(withAccelerate());
+  const body = await c.req.json();
+  try{
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        email: body.email,
+      }
+    })
+
+    if(!existingUser){
+      c.status(403);
+      return c.json({
+        message: "User does not exist, create an account",
+      })
+    }
+
+    const jwt = await sign({id: existingUser.id}, c.env.JWT_SECRET);
+    return c.json({
+      jwt, 
+      message: "User has logged in successfully", 
+    });
+  }
+  catch(e){
+    console.error(e);
+    return c.json({
+      message: "Error while sign in up",
+    })
+  }
 })
 
 app.post('/api/v1/blog', (c) => {
