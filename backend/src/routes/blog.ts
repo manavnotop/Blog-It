@@ -14,7 +14,7 @@ blogRouter.post('/', async (c) => {
     const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL,}).$extends(withAccelerate())    
     const body = await c.req.json();
     try {
-        const newPost = prisma.post.create({
+        const newPost = await prisma.post.create({
             data: {
                 title: body.title,
                 content: body.title,
@@ -23,19 +23,42 @@ blogRouter.post('/', async (c) => {
             }
         })
         return c.json({
+            postId: newPost.id,
             message: "Post created successfully"
         })
     }
     catch(e){
         console.error(e);
         return c.json({
-            message: "Error occurred while creating post, try again "
+            message: "Error occurred while creating post, please try again "
         })
     }
 })
   
-blogRouter.put('/', (c) => {
-    return c.text("put blog");
+blogRouter.put('/', async (c) => {
+    const primsa = new PrismaClient({datasourceUrl: c.env.DATABASE_URL}).$extends(withAccelerate());
+    const body = await c.req.json();
+    try{
+        const updatePost = await primsa.post.update({
+            where: {
+                id: body.id,
+            },
+            data:{
+                title: body.title,
+                content: body.content
+            }
+        })
+        return c.json({
+            id: updatePost.id,
+            message: "Blog updated successfully",
+        })
+    }
+    catch(e){
+        console.error(e);
+        return c.json({
+            message: "Error while updating the blog, please try again", 
+        })
+    }
 })
   
 blogRouter.get('/:id', (c) =>{
