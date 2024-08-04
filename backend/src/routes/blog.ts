@@ -80,6 +80,19 @@ blogRouter.get('/:id', async (c) =>{
     }
 })
   
-blogRouter.get('/bulk', (c)=>{
-    return c.text("get blog bulk");
+blogRouter.get('/bulk', async (c)=>{
+    const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL}).$extends(withAccelerate());
+    try{
+        const posts = await prisma.post.findMany({});
+        return c.json({
+            posts: posts,
+            message: "posts found successfully"
+        })
+    }
+    catch(e){
+        console.error(e);
+        return c.json({
+            message: "Error while fetching all the posts, please try again",
+        })
+    }
 })
