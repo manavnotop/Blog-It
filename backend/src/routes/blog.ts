@@ -61,10 +61,23 @@ blogRouter.put('/', async (c) => {
     }
 })
   
-blogRouter.get('/:id', (c) =>{
-    const id = c.req.param;
-    console.log(id);
-    return c.text("get blog by id");
+blogRouter.get('/:id', async (c) =>{
+    const posstId = c.req.param('id');
+    const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL}).$extends(withAccelerate());
+    try{
+        const getPost = await prisma.post.findFirst({
+            where: {
+                id: posstId,
+            }
+        })
+        return c.json(getPost);
+    }
+    catch(e){
+        console.error(e);
+        return c.json({
+            message: "Error while fetching the post, please try again"
+        })
+    }
 })
   
 blogRouter.get('/bulk', (c)=>{
