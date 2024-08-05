@@ -10,10 +10,11 @@ export const userRouter = new Hono<{
     }
 }>()
 
-userRouter.post('/api/v1/user/signup', async (c) => {
+userRouter.post('/signup', async (c) => {
     const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL,}).$extends(withAccelerate())
     const body = await c.req.json();
     try{
+      console.log("inside try");
       const newUser = await prisma.user.create({
         data: {
           email: body.email,
@@ -31,11 +32,11 @@ userRouter.post('/api/v1/user/signup', async (c) => {
     catch(e){
       console.error(e);
       c.status(403);
-      return c.json("Error while signing up");
+      return c.text("Error while signing up");
     }
 })
 
-userRouter.post('/api/v1/user/signin', async (c) => {
+userRouter.post('/signin', async (c) => {
     const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL,}).$extends(withAccelerate());
     const body = await c.req.json();
     try{

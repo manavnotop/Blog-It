@@ -20,7 +20,7 @@ blogRouter.use(async (c, next) => {
     const user = await verify(authHeader, c.env.JWT_SECRET);
     if(user && typeof user.id === 'string'){
         c.set('userId', user.id);
-        next();
+        await next();
     }
     else{
         return c.json({
@@ -30,15 +30,15 @@ blogRouter.use(async (c, next) => {
 });
 
 blogRouter.post('/', async (c) => {
-    const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL,}).$extends(withAccelerate())    
+    const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL,}).$extends(withAccelerate());
+    const userId = c.get("userId");
     const body = await c.req.json();
     try {
         const newPost = await prisma.post.create({
             data: {
                 title: body.title,
                 content: body.title,
-                //@ts-ignore
-                authorId: useId,
+                authorId: userId,
             }
         })
         return c.json({
@@ -79,6 +79,23 @@ blogRouter.put('/', async (c) => {
         })
     }
 })
+
+blogRouter.get('/bulk', async (c)=>{
+    const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL}).$extends(withAccelerate());
+    try{
+        const posts = await prisma.post.findMany({});
+        return c.json({
+            posts: posts,
+            message: "posts found successfully"
+        })
+    }
+    catch(e){
+        console.error(e);
+        return c.json({
+            message: "Error while fetching all the posts, please try again",
+        })
+    }
+})
   
 blogRouter.get('/:id', async (c) =>{
     const posstId = c.req.param('id');
@@ -95,23 +112,6 @@ blogRouter.get('/:id', async (c) =>{
         console.error(e);
         return c.json({
             message: "Error while fetching the post, please try again"
-        })
-    }
-})
-  
-blogRouter.get('/bulk', async (c)=>{
-    const prisma = new PrismaClient({datasourceUrl: c.env.DATABASE_URL}).$extends(withAccelerate());
-    try{
-        const posts = await prisma.post.findMany({});
-        return c.json({
-            posts: posts,
-            message: "posts found successfully"
-        })
-    }
-    catch(e){
-        console.error(e);
-        return c.json({
-            message: "Error while fetching all the posts, please try again",
         })
     }
 })
